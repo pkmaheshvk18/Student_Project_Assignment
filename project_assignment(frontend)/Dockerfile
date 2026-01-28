@@ -1,26 +1,20 @@
-# Stage 1: Build Angular app
 FROM node:lts-slim AS build
-WORKDIR /src
+
+WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci
+
+RUN npm install
+
 COPY . ./
-RUN npm run build -- --configuration=development --output-path=dist
 
-# Stage 2: Serve with Nginx
-FROM nginx:stable AS final
-EXPOSE 4200
+RUN npm run build
 
-# Remove default nginx index.html before copying Angular dist
+FROM nginx:alpine
+
 RUN rm -f /usr/share/nginx/html/index.html
 
-# Copy built Angular app to nginx
-COPY --from=build /src/dist/browser /usr/share/nginx/html
+COPY --from=build /src/dist/frontprojectassignment/browser /usr/share/nginx/html
 
-# Copy custom nginx config
-COPY nginx.conf /etc/nginx/nginx.conf
+EXPOSE 80
 
-# Optional if you allowed Server side rendering
-RUN if [ -f /usr/share/nginx/html/index.csr.html ]; then \
-      cp /usr/share/nginx/html/index.csr.html /usr/share/nginx/html/index.html; \
-    fi
